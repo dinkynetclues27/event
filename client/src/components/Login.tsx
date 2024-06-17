@@ -88,6 +88,11 @@ const Login: React.FC<LoginProps> = () => {
         </button>
         <br />
         <br />
+        <Link to="/forget">
+        <button type="submit" className="btn btn-primary">
+          Forget password
+        </button>
+        </Link>
         <Link to="/register">
           <button type="submit" className="btn btn-primary">
             Don't have account ? Register

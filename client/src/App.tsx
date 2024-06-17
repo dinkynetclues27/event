@@ -9,7 +9,8 @@ import User from './components/User';
 import Home from './components/Home';
 import Event from './components/Event';
 import UserHome from './components/UserHome';
-
+import Forget from './components/ForgetPassword';
+import Reset from './components/Resetpassword';
 
 function App() {
   return (
@@ -22,6 +23,8 @@ function App() {
           <Route path='/event' element={<Event/>}/>
           <Route path='/userhome' element={<UserHome/>}/>
           <Route path='/register' element={<Registration/>}/>
+          <Route path="/forget" element={<Forget/>}/>
+          <Route path="/reset" element={<Reset/>}/>
         </Routes>
       </Router>
 

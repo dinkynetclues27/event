@@ -153,5 +153,6 @@ module.exports={
     deleteUser,
     register,
     registeradmin,
-    loginuser
+    loginuser,
+
 }

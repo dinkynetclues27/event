@@ -2,6 +2,7 @@ const {User} = require('../models/User');
 const JWT_SECRET = "event"
 const nodemailer = require("nodemailer");
 
+
 const {
     createUser,getUser,getUserById,updateUser,deleteUser,register,registeradmin,loginuser
 } = require('../services/Userservice');
@@ -155,8 +156,90 @@ const loginusercontroller = async (req, res) => {
   return res.status(result.status).json({ message: result.message, token: result.token });
 };
 
-  
+
+const ResetEmail = async (Email) => {
+  const resetLink = 'http://localhost:3000/reset'
+  let info = await transporter.sendMail({
+      from: 'dinkyjani27@gmail.com', 
+      to: Email, 
+      subject: 'Password Reset Link', 
+       
+      html: `
+            <p>Hello User,</p>
+            <p> Here is you Password Reset Link.</p>
+            <p>Please click on this link and reset your password <a href="${resetLink}">here</a> and access your account.</p>
+            <p>Regards,<br>Admin</p>
+        `
+  });
+}
+
+
+const forgetPassword = async (req, res) => {
+  try {
+    
+    const user = await User.findOne({ where : {Email: req.body.Email} });
+
+    
+    if (!user) {
+      return res.status(404).send({ message: "User not found" });
+    }
+
+    
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET_KEY, {expiresIn: "10m",});
+
+    const mailOptions = {
+      from: "dinkyjani27@gmail.com",
+      to: req.body.Email,
+      subject: "Reset Password",
+      html: `<h1>Reset Your Password</h1>
+    <p>Click on the following link to reset your password:</p>
+    <a href="http://localhost:5173/reset-password/${token}">http://localhost:5173/reset-password/${token}</a>
+    <p>The link will expire in 10 minutes.</p>
+    <p>If you didn't request a password reset, please ignore this email.</p>`,
+    };
+
+    transporter.sendMail(mailOptions, (err, info) => {
+      if (err) {
+        return res.status(500).send({ message: err.message });
+      }
+      res.status(200).send({ message: "Email sent" });
+    });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const decodedToken = jwt.verify(
+      req.params.token,
+      process.env.JWT_SECRET_KEY
+    );
+
+
+    if (!decodedToken) {
+      return res.status(401).send({ message: "Invalid token" });
+    }
+
+    const user = await User.findOne({ where: {id: decodedToken.userId} });
+    if (!user) {
+      return res.status(401).send({ message: "no user found" });
+    }
+    
+    const salt = await bycrypt.genSalt(10);
+    req.body.newPassword = await bycrypt.hash(req.body.newPassword, salt);
+
+    user.password = req.body.newPassword;
+    await user.save();
+
+    res.status(200).send({ message: "Password updated" });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+
 module.exports ={
     createUserController,getUserController,getUserByIdController,updateUserController,deleteUserController,registerUserController
-    ,registerAdminController,loginusercontroller
+    ,registerAdminController,loginusercontroller,forgetPassword,resetPassword
 }
