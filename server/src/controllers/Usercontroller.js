@@ -1,9 +1,18 @@
 const {User} = require('../models/User');
 const JWT_SECRET = "event"
+const nodemailer = require("nodemailer");
+
 const {
     createUser,getUser,getUserById,updateUser,deleteUser,register,registeradmin,loginuser
 } = require('../services/Userservice');
 
+let transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+      user: 'dinkyjani27@gmail.com', 
+      pass: 'ccqf nslr ojkt tkug' 
+  }
+});
 
 const createUserController = async (req,res) =>{
     try{
@@ -34,13 +43,21 @@ const getUserByIdController = async(req,res)=>{
 }
 
 const updateUserController = async(req,res)=>{
-    try{
-        const user = await updateUser(req.params.id, req.body);
-        res.status(200).json(user);
-      } catch (error) {
-        res.status(404).json({ error: error.message });
-      }
+  try{
+    const user = await getUserById(req.params.id);
+    const updatedUser = await updateUser(req.params.id, req.body);
+
+    if (user.Request === 'pending' && req.body.Request === 'approve') {
+      sendApprovalEmail(user.Email);
+    } else if (user.Request === 'pending' && req.body.Request === 'reject') {
+      sendRejectionEmail(user.Email);
+    }
+    res.status(200).json(updatedUser);
+    } catch (error) {
+      res.status(404).json({ error: error.message });
+    }
 }
+
 
 const deleteUserController = async(req,res)=>{
     try {
@@ -55,11 +72,65 @@ const registerUserController = async(req,res) =>{
     try {
         const { Name, Email, Password,Mobile_No,Gender} = req.body;
         await register(Name, Email, Password,Mobile_No,Gender);
+        await sendEmailToAdmin(Name, Email);
         res.status(201).json({ message: "Registration successful" });
       } catch (error) {
         res.status(400).json({ error: error.message });
       }
 }
+
+const sendEmailToAdmin = async (Name, Email) => {
+  const reviewLink = 'http://localhost:3000/user'
+  let info = await transporter.sendMail({
+      from: 'dinkyjani27@gmail.com', 
+      to: 'jdinky.netclues@gmail.com', 
+      subject: 'New User Registration Request', 
+       
+      html: `
+            <p>Hello Admin,</p>
+            <p>A new user named ${Name} (${Email}) has registered and is pending approval.</p>
+            <p>Please review the registration request <a href="${reviewLink}">here</a> and take necessary action.</p>
+            <p>Regards,<br>Your Team</p>
+        `
+  });
+
+  console.log("Message sent: %s", info.messageId);
+}
+
+const sendApprovalEmail = (userEmail) => {
+  const mailOptions = {
+    from: 'dinkyjani27@gmail.com',
+    to: userEmail,
+    subject: 'Account Approval',
+    text: 'Your account has been approved. You can now log in to your account.'
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error('Error sending email:', error);
+    } else {
+      console.log('Email sent:', info.response);
+    }
+  });
+};
+
+
+const sendRejectionEmail = (userEmail) => {
+  const mailOptions = {
+    from: 'dinkyjani27@gmail.com',
+    to: userEmail,
+    subject: 'Account Rejection',
+    text: 'Your registration request has been rejected. If you have any questions, please contact support.',
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error('Error sending email:', error);
+    } else {
+      console.log('Email sent:', info.response);
+    }
+  });
+};
 
 const registerAdminController = async(req,res)=>{
     try {
@@ -71,31 +142,18 @@ const registerAdminController = async(req,res)=>{
       }
 }
 
-const loginusercontroller = async(req,res)=>{
-    try{
-        const { Email ,Password} = req.body;
-        const result = await loginuser(Email ,Password);
-  
-      if (result.error) {
-        return res.status(400).json({ message: result.error });
-      } else {
-        return res
-          .status(200)
-          .cookie("authToken", result.token, {
-            secure: true,
-            httpOnly: true,
-            sameSite: "none",
-            expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-          })
-          .json({ message: "success" , token: result.token});
-      }
+const loginusercontroller = async (req, res) => {
+  const { Email, Password } = req.body;
 
-    }catch (error) {
-        res.status(400).json({ error: error.message });
-      }
-}
+  const result = await loginuser(Email, Password);
 
+  if (result.error) {
+    return res.status(result.status).json({ error: result.error });
+  }
 
+  res.cookie('jwt', result.token, { httpOnly: true, secure: true, maxAge: 3600000 });
+  return res.status(result.status).json({ message: result.message, token: result.token });
+};
 
   
 module.exports ={

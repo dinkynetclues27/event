@@ -2,12 +2,14 @@ import React from 'react';
 import logo from './logo.svg';
 import './App.css';
 import Sidebar from './components/Sidebar';
-import Register from './components/Register';
+import Registration from './components/Registration';
 import { BrowserRouter as Router,Route,Routes } from 'react-router-dom';
 import Login from './components/Login';
 import User from './components/User';
 import Home from './components/Home';
 import Event from './components/Event';
+import UserHome from './components/UserHome';
+
 
 function App() {
   return (
@@ -18,6 +20,8 @@ function App() {
           <Route path='/home' element={<Home/>}/>
           <Route path='/user' element={<User/>}/>
           <Route path='/event' element={<Event/>}/>
+          <Route path='/userhome' element={<UserHome/>}/>
+          <Route path='/register' element={<Registration/>}/>
         </Routes>
       </Router>
 

@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate,Link } from "react-router-dom";
 import Joi from "joi";
 import axios from "axios";
 
@@ -10,6 +10,7 @@ const Login: React.FC<LoginProps> = () => {
   const [Email, setEmail] = useState<string>("");
   const [Password, setPassword] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const schema = Joi.object({
     Email: Joi.string()
@@ -42,7 +43,11 @@ const Login: React.FC<LoginProps> = () => {
         const { token } = response.data;
         localStorage.setItem("token", token);
         console.log("Login successfully");
-        window.location.href = "/home";
+        if (Email === "admin@gmail.com") {
+          navigate("/home");
+        } else {
+          navigate("/userhome");
+        }
       }
     } catch (error) {
     //   setError(error.response?.data.error || err.message);
@@ -83,11 +88,11 @@ const Login: React.FC<LoginProps> = () => {
         </button>
         <br />
         <br />
-        {/* <Link to="/register">
+        <Link to="/register">
           <button type="submit" className="btn btn-primary">
             Don't have account ? Register
           </button>
-        </Link> */}
+        </Link>
       </form>
     </div>
   );

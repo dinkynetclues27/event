@@ -1,9 +1,11 @@
 const express = require("express");
 const userRoutes = express.Router();
 const userController = require('../controllers/Usercontroller');
+const authenticateUser = require('../middleware/authenticate');
+
 
 userRoutes.post('/',userController.createUserController);
-userRoutes.get('/',userController.getUserController);
+userRoutes.get('/',authenticateUser,userController.getUserController);
 userRoutes.get("/:id",userController.getUserByIdController);
 userRoutes.patch("/:id",userController.updateUserController);
 userRoutes.delete("/:id",userController.deleteUserController);

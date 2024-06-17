@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken")
 require('dotenv').config();
 const { User } = require('../models');
 const bcrypt = require('bcrypt');
+const JWT_SECRET = "event"
 
 const createUser = async(data)=>{
     try{
@@ -106,34 +107,43 @@ const registeradmin = async(Name,Email,Password,Phone_No,Gender)=>{
 }
 
 
-const loginuser = async (Email,Password)=> {
-  const existingUser = await User.findOne({
-    where: { Email:Email },
-  });
+const loginuser = async (Email, Password) => {
+  try {
+      const user = await User.findOne({ where: { Email } });
 
-  if (!existingUser) {
-    return { error: "user does not exist" };
-  }
-
-  const comparePassword = await bcrypt.compare(Password, existingUser.Password);
-
-  if (!comparePassword) {
-    return { error: "Invalid Password" };
-  } else {
-    const generateJwtToken = jwt.sign(
-      {
-        id: existingUser.id,
-        Email: existingUser.Email,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1d",
+      if (!user) {
+          return { error: 'User not found', status: 404 };
       }
-    );
 
-    return { success: true, token: generateJwtToken };
+      if (user.Request !== 'approve') {
+          return { error: 'User request not approved', status: 403 };
+      }
+
+      const isPasswordValid = await bcrypt.compare(Password, user.Password);
+
+      if (!isPasswordValid) {
+          return { error: 'Invalid password', status: 401 };
+      }
+
+      const token = jwt.sign(
+          {
+              Email: user.Email,
+              id: user.id,
+              User_type: user.User_type,
+          },
+          JWT_SECRET,
+          { expiresIn: '1h' } 
+      );
+
+      console.log("Generated JWT token:", token);
+      return { message: 'Login successful', token, status: 200 };
+
+  } catch (error) {
+      console.error("Error logging in:", error);
+      return { error: 'Internal Server Error', status: 500 };
   }
-}
+};
+
 
 module.exports={
     createUser,
