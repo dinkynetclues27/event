@@ -4,7 +4,7 @@ const nodemailer = require("nodemailer");
 
 
 const {
-    createUser,getUser,getUserById,updateUser,deleteUser,register,registeradmin,loginuser
+    createUser,getUser,getUserById,updateUser,deleteUser,register,registeradmin,loginuser,resetPassword,forgetPassword
 } = require('../services/Userservice');
 
 let transporter = nodemailer.createTransport({
@@ -157,89 +157,53 @@ const loginusercontroller = async (req, res) => {
 };
 
 
-const ResetEmail = async (Email) => {
-  const resetLink = 'http://localhost:3000/reset'
+
+const forgetPasswordController = async (req, res) => {
+  const { Email } = req.body;
+  const result = await forgetPassword(Email);
+
+  if (result.error) {
+    return res.status(result.status).json({ error: result.error });
+  }
+
+  await sendResetPasswordEmail(Email, result.token);
+  res.status(result.status).json({ message: 'Password reset email sent' });
+};
+
+const resetPasswordController = async (req, res) => {
+  const { token } = req.params;
+  const { Password } = req.body;
+  const result = await resetPassword(token, Password);
+
+  if (result.error) {
+    return res.status(result.status).json({ error: result.error });
+  }
+
+  res.status(result.status).json({ message: result.message });
+};
+
+const sendResetPasswordEmail = async (Email, token) => {
+  const resetLink = `http://localhost:3000/resetpassword/${token}`;
   let info = await transporter.sendMail({
-      from: 'dinkyjani27@gmail.com', 
-      to: Email, 
-      subject: 'Password Reset Link', 
-       
-      html: `
-            <p>Hello User,</p>
-            <p> Here is you Password Reset Link.</p>
-            <p>Please click on this link and reset your password <a href="${resetLink}">here</a> and access your account.</p>
-            <p>Regards,<br>Admin</p>
-        `
+    from: 'dinkyjani27@gmail.com',
+    to: Email,
+    subject: 'Password Reset Request',
+    html: `
+      <p>Hello,</p>
+      <p>You have requested to reset your password. Please click the link below to reset your password:</p>
+      <p><a href="${resetLink}">Reset Password</a></p>
+      <p>If you did not request this, please ignore this email.</p>
+      <p>Regards,<br>Your Team</p>
+    `
   });
-}
 
-
-const forgetPassword = async (req, res) => {
-  try {
-    
-    const user = await User.findOne({ where : {Email: req.body.Email} });
-
-    
-    if (!user) {
-      return res.status(404).send({ message: "User not found" });
-    }
-
-    
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET_KEY, {expiresIn: "10m",});
-
-    const mailOptions = {
-      from: "dinkyjani27@gmail.com",
-      to: req.body.Email,
-      subject: "Reset Password",
-      html: `<h1>Reset Your Password</h1>
-    <p>Click on the following link to reset your password:</p>
-    <a href="http://localhost:5173/reset-password/${token}">http://localhost:5173/reset-password/${token}</a>
-    <p>The link will expire in 10 minutes.</p>
-    <p>If you didn't request a password reset, please ignore this email.</p>`,
-    };
-
-    transporter.sendMail(mailOptions, (err, info) => {
-      if (err) {
-        return res.status(500).send({ message: err.message });
-      }
-      res.status(200).send({ message: "Email sent" });
-    });
-  } catch (err) {
-    res.status(500).send({ message: err.message });
-  }
+  console.log("Password reset email sent: %s", info.messageId);
 };
 
-const resetPassword = async (req, res) => {
-  try {
-    const decodedToken = jwt.verify(
-      req.params.token,
-      process.env.JWT_SECRET_KEY
-    );
 
-
-    if (!decodedToken) {
-      return res.status(401).send({ message: "Invalid token" });
-    }
-
-    const user = await User.findOne({ where: {id: decodedToken.userId} });
-    if (!user) {
-      return res.status(401).send({ message: "no user found" });
-    }
-    
-    const salt = await bycrypt.genSalt(10);
-    req.body.newPassword = await bycrypt.hash(req.body.newPassword, salt);
-
-    user.password = req.body.newPassword;
-    await user.save();
-
-    res.status(200).send({ message: "Password updated" });
-  } catch (err) {
-    res.status(500).send({ message: err.message });
-  }
-};
 
 
 module.exports ={
     createUserController,getUserController,getUserByIdController,updateUserController,deleteUserController,registerUserController
-    ,registerAdminController,loginusercontroller,forgetPassword,resetPassword
+    ,registerAdminController,loginusercontroller,forgetPasswordController,resetPasswordController
 }

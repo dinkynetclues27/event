@@ -9,8 +9,8 @@ import User from './components/User';
 import Home from './components/Home';
 import Event from './components/Event';
 import UserHome from './components/UserHome';
-import Forget from './components/ForgetPassword';
-import Reset from './components/Resetpassword';
+import ForgetPassword from './components/ForgetPassword';
+import Resetpassword from './components/Resetpassword';
 
 function App() {
   return (
@@ -23,8 +23,8 @@ function App() {
           <Route path='/event' element={<Event/>}/>
           <Route path='/userhome' element={<UserHome/>}/>
           <Route path='/register' element={<Registration/>}/>
-          <Route path="/forget" element={<Forget/>}/>
-          <Route path="/reset" element={<Reset/>}/>
+          <Route path="/forget" element={<ForgetPassword />} />
+          <Route path="/resetpassword/:token" element={<Resetpassword />} />
         </Routes>
       </Router>
 

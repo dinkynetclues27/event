@@ -53,9 +53,20 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
 import interactionPlugin from "@fullcalendar/interaction";
 import Sidebar from "./Sidebar";
+import Modal from "./Modal"; // Import the Modal component
+
+interface FormData {
+  eventname: string;
+  startTime: string;
+  endTime: string;
+  venue: string;
+  capacity: number;
+  price: number;
+  repeatEvent: string;
+}
 
 const Event: FC = () => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     eventname: "",
     startTime: "",
     endTime: "",
@@ -101,15 +112,13 @@ const Event: FC = () => {
       id: info.event.id,
       title: info.event.title,
       startStr: info.event.start.toString(),
-      
       endStr: info.event.end ? info.event.end.toString() : "",
       location: info.event.extendedProps.location,
       capacity: info.event.extendedProps.capacity,
       price: info.event.extendedProps.price,
       repeatEvents: info.event.extendedProps.repeatEvents,
     });
-    // console.log("startStr UTC: " + info.event.start.toUTCString());
-    
+
     setUpdateFormData({
       eventname: info.event.title,
       startTime: info.event.start.toString().slice(0, 16),
@@ -119,11 +128,11 @@ const Event: FC = () => {
       price: info.event.extendedProps.price,
       repeatEvent: info.event.extendedProps.repeatEvents,
     });
+
+    
   };
 
-  
   const handleDateClick = (info: any) => {
-    console.log("Date clicked:", info.date);
     setFormData({ ...formData, startTime: info.dateStr });
     setForm(true);
   };
@@ -144,11 +153,99 @@ const Event: FC = () => {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    axios
-      .post("http://localhost:4000/api/event", formData)
-      .then((response) => {
-        console.log("Event created:", response.data);
-        setEvents([...events, response.data]);
+
+    const createEvents = () => {
+      const events = [];
+
+      const startDate = new Date(formData.startTime);
+      const endDate = new Date(formData.endTime);
+
+      if (formData.repeatEvent === "daily") {
+        const diffDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+        for (let i = 0; i <= diffDays; i++) {
+          const eventStartTime = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + i);
+          const eventEndTime = new Date(eventStartTime.getTime() + (endDate.getTime() - startDate.getTime()));
+    
+
+          events.push({
+            eventname: formData.eventname,
+            startTime: eventStartTime.toISOString(),
+            endTime: eventEndTime.toISOString(),
+            venue: formData.venue,
+            capacity: formData.capacity,
+            price: formData.price,
+            repeatEvent: formData.repeatEvent,
+          });
+        }
+      } else if (formData.repeatEvent === "weekly") {
+        const diffWeeks = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 7)) + 1;
+
+        for (let i = 0; i <= diffWeeks; i++) {
+             const eventStartTime = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + i * 7);
+      const eventEndTime = new Date(eventStartTime.getTime() + (endDate.getTime() - startDate.getTime()));
+
+          events.push({
+            eventname: formData.eventname,
+            startTime: eventStartTime.toISOString(),
+            endTime: eventEndTime.toISOString(),
+            venue: formData.venue,
+            capacity: formData.capacity,
+            price: formData.price,
+            repeatEvent: formData.repeatEvent,
+          });
+        }
+      } else if (formData.repeatEvent === "monthly") {
+        const diffMonths = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30.5)) + 1;
+
+        for (let i = 0; i <= diffMonths; i++) {
+          const eventStartTime = new Date(startDate.getFullYear(), startDate.getMonth() + i, startDate.getDate());
+          const eventEndTime = new Date(eventStartTime.getTime() + (endDate.getTime() - startDate.getTime()));
+    
+          events.push({
+            eventname: formData.eventname,
+            startTime: eventStartTime.toISOString(),
+            endTime: eventEndTime.toISOString(),
+            venue: formData.venue,
+            capacity: formData.capacity,
+            price: formData.price,
+            repeatEvent: formData.repeatEvent,
+          });
+        }
+      } else if (formData.repeatEvent === "yearly") {
+        const diffYears = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365)) + 1;
+
+        for (let i = 0; i < diffYears; i++) {
+          const eventStartTime = new Date(startDate.getFullYear() + i, startDate.getMonth(), startDate.getDate());
+          const eventEndTime = new Date(eventStartTime.getTime() + (endDate.getTime() - startDate.getTime()));
+
+          events.push({
+            eventname: formData.eventname,
+            startTime: eventStartTime.toISOString(),
+            endTime: eventEndTime.toISOString(),
+            venue: formData.venue,
+            capacity: formData.capacity,
+            price: formData.price,
+            repeatEvent: formData.repeatEvent,
+          });
+        }
+      } else {
+        events.push(formData);
+      }
+
+      return events;
+    };
+
+    const eventsToCreate = createEvents();
+
+    Promise.all(
+      eventsToCreate.map((eventData) =>
+        axios.post("http://localhost:4000/api/event", eventData)
+      )
+    )
+      .then((responses) => {
+        const newEvents = responses.map((response) => response.data);
+        setEvents([...events, ...newEvents]);
         setFormData({
           eventname: "",
           startTime: "",
@@ -161,21 +258,17 @@ const Event: FC = () => {
         setForm(false);
       })
       .catch((error) => {
-        console.error("Error creating event:", error);
+        console.error("Error creating events:", error);
       });
   };
+
 
   const handleUpdateSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     axios
       .patch(`http://localhost:4000/api/event/${eventInfo.id}`, updateFormData)
       .then((response) => {
-        console.log("Event updated:", response.data);
-        setEvents(
-          events.map((ev) =>
-            ev.id === response.data.id ? response.data : ev
-          )
-        );
+        setEvents(events.map((ev) => (ev.id === response.data.id ? response.data : ev)));
         setUpdateForm(false);
         setEventInfo(null);
       })
@@ -187,11 +280,13 @@ const Event: FC = () => {
   const handleDelete = async (id: number) => {
     try {
       await axios.delete(`http://localhost:4000/api/event/${eventInfo.id}`);
-     
+      setEvents(events.filter((event) => event.id !== id));
+      setEventInfo(null);
     } catch (error) {
-      console.error("Error deleting user:", error);
+      console.error("Error deleting event:", error);
     }
   };
+
   return (
     <div className="container-fluid">
       <div className="row flex-nowrap">
@@ -220,137 +315,166 @@ const Event: FC = () => {
           </div>
         </div>
       </div>
-
-      {form && (
-        <form onSubmit={handleSubmit}>
-          <label>
-            Event Name:
-            <input
-              type="text"
-              name="eventname"
-              value={formData.eventname}
-              onChange={handleInputChange}
-            />
-          </label>
-          <label>
-            Venue:
-            <input
-              type="text"
-              name="venue"
-              value={formData.venue}
-              onChange={handleInputChange}
-            />
-          </label>
-          <label>
-            Start Time:
-            <input
-              type="datetime-local"
-              name="startTime"
-              value={formData.startTime}
-              onChange={handleInputChange}
-            />
-          </label>
-          <label>
-            End Time:
-            <input
-              type="datetime-local"
-              name="endTime"
-              value={formData.endTime}
-              onChange={handleInputChange}
-            />
-          </label>
-          <label>
-            Capacity:
-            <input
-              type="number"
-              name="capacity"
-              value={formData.capacity}
-              onChange={handleInputChange}
-            />
-          </label>
-          <label>
-            Price:
-            <input
-              type="text"
-              name="price"
-              value={formData.price}
-              onChange={handleInputChange}
-            />
-          </label>
-          <div className="row mb-3">
-            <label className="col-sm-2 col-form-label">Repeated Events:</label>
-            <div className="col-sm-10">
-              <div className="form-check form-check-inline">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  name="repeatEvent"
-                  value="daily"
-                  onChange={handleInputChange}
-                />
-                <label className="form-check-label">Daily</label>
-              </div>
-              <div className="form-check form-check-inline">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  name="repeatEvent"
-                  value="weekly"
-                  onChange={handleInputChange}
-                />
-                <label className="form-check-label">Weekly</label>
-              </div>
-              <div className="form-check form-check-inline">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  name="repeatEvent"
-                  value="monthly"
-                  onChange={handleInputChange}
-                />
-                <label className="form-check-label">Monthly</label>
-              </div>
-              <div className="form-check form-check-inline">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  name="repeatEvent"
-                  value="yearly"
-                  onChange={handleInputChange}
-                />
-                <label className="form-check-label">Yearly</label>
-              </div>
-            </div>
-          </div>
-          <button type="submit">Create Event</button>
-        </form>
-      )}
-
-      {eventInfo && (
-        <div className="event-popup">
-          <div className="event-popup-content">
-            <h3>{eventInfo.title}</h3>
-            <p>Start: {eventInfo.startStr}</p>
-            <p>End: {eventInfo.endStr}</p>
-            <p>Location: {eventInfo.location}</p>
-            <p>Capacity: {eventInfo.capacity}</p>
-            <p>Price: {eventInfo.price}</p>
-            <p>Repeat Event: {eventInfo.repeatEvents}</p>
-            <button onClick={() => setUpdateForm(true)}>Update</button>
-            <button onClick={()=>handleDelete(eventInfo.id)}>Delete</button>
-            <button onClick={closeEventPopup}>Close</button>
-          </div>
+      <Modal show={form} onClose={() => setForm(false)}>
+  <div className="container">
+    <form onSubmit={handleSubmit}>
+      <div className="mb-3">
+        <label htmlFor="eventName" className="form-label">Event Name:</label>
+        <input
+          type="text"
+          className="form-control"
+          id="eventName"
+          name="eventname"
+          value={formData.eventname}
+          onChange={handleInputChange}
+        />
+      </div>
+      <div className="mb-3">
+        <label htmlFor="venue" className="form-label">Venue:</label>
+        <input
+          type="text"
+          className="form-control"
+          id="venue"
+          name="venue"
+          value={formData.venue}
+          onChange={handleInputChange}
+        />
+      </div>
+      <div className="row mb-3">
+        <div className="col">
+          <label htmlFor="startTime" className="form-label">Start Time:</label>
+          <input
+            type="datetime-local"
+            className="form-control"
+            id="startTime"
+            name="startTime"
+            value={formData.startTime}
+            onChange={handleInputChange}
+          />
         </div>
-      )}
+        <div className="col">
+          <label htmlFor="endTime" className="form-label">End Time:</label>
+          <input
+            type="datetime-local"
+            className="form-control"
+            id="endTime"
+            name="endTime"
+            value={formData.endTime}
+            onChange={handleInputChange}
+          />
+        </div>
+      </div>
+      <div className="row mb-3">
+        <div className="col">
+          <label htmlFor="capacity" className="form-label">Capacity:</label>
+          <input
+            type="number"
+            className="form-control"
+            id="capacity"
+            name="capacity"
+            value={formData.capacity}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div className="col">
+          <label htmlFor="price" className="form-label">Price:</label>
+          <input
+            type="text"
+            className="form-control"
+            id="price"
+            name="price"
+            value={formData.price}
+            onChange={handleInputChange}
+          />
+        </div>
+      </div>
+      <div className="mb-3">
+        <label className="form-label">Repeated Events:</label>
+        <div className="form-check">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            id="daily"
+            name="repeatEvent"
+            value="daily"
+            onChange={handleInputChange}
+          />
+          <label className="form-check-label" htmlFor="daily">Daily</label>
+        </div>
+        <div className="form-check">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            id="weekly"
+            name="repeatEvent"
+            value="weekly"
+            onChange={handleInputChange}
+          />
+          <label className="form-check-label" htmlFor="weekly">Weekly</label>
+        </div>
+        <div className="form-check">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            id="monthly"
+            name="repeatEvent"
+            value="monthly"
+            onChange={handleInputChange}
+          />
+          <label className="form-check-label" htmlFor="monthly">Monthly</label>
+        </div>
+        <div className="form-check">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            id="yearly"
+            name="repeatEvent"
+            value="yearly"
+            onChange={handleInputChange}
+          />
+          <label className="form-check-label" htmlFor="yearly">Yearly</label>
+        </div>
+      </div>
+      <button type="submit" className="btn btn-primary">Create Event</button>
+    </form>
+  </div>
+</Modal>
 
+
+{eventInfo && (
+  <div className="modal fade show" style={{ display: 'block' }}>
+    <div className="modal-dialog modal-dialog-centered">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h5 className="modal-title">{eventInfo.title}</h5>
+          <button type="button" className="btn-close" aria-label="Close" onClick={closeEventPopup}></button>
+        </div>
+        <div className="modal-body">
+          <p>Start: {eventInfo.startStr}</p>
+          <p>End: {eventInfo.endStr}</p>
+          <p>Location: {eventInfo.location}</p>
+          <p>Capacity: {eventInfo.capacity}</p>
+          <p>Price: {eventInfo.price}</p>
+          <p>Repeat Event: {eventInfo.repeatEvents}</p>
+        </div>
+        <div className="modal-footer">
+          <button type="button" className="btn btn-primary" onClick={() =>{setUpdateForm(true); setEventInfo(null);}}>Update</button>
+          <button type="button" className="btn btn-danger" onClick={() => handleDelete(eventInfo.id)}>Delete</button>
+          <button type="button" className="btn btn-secondary" onClick={closeEventPopup}>Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
       {updateForm && (
-        <form onSubmit={handleUpdateSubmit}>
+        <Modal show={true} onClose={() => setUpdateForm(false)}>
+            <form onSubmit={handleUpdateSubmit}>
           <label>
             Event Name:
             <input
               type="text"
               name="eventname"
-              value={updateFormData.eventname || eventInfo.title}
+              value={updateFormData.eventname || (eventInfo ? eventInfo.title : '')}
               onChange={handleUpdateInputChange}
             />
           </label>
@@ -359,7 +483,7 @@ const Event: FC = () => {
             <input
               type="text"
               name="venue"
-              value={updateFormData.venue || eventInfo.location}
+              value={updateFormData.venue || (eventInfo ? eventInfo.location : '')}
               onChange={handleUpdateInputChange}
             />
           </label>
@@ -368,7 +492,7 @@ const Event: FC = () => {
             <input
               type="datetime-local"
               name="startTime"
-              value={updateFormData.startTime || eventInfo.startStr}
+              value={updateFormData.startTime || (eventInfo ? eventInfo.startStr : '')}
               onChange={handleUpdateInputChange}
             />
           </label>
@@ -377,7 +501,7 @@ const Event: FC = () => {
             <input
               type="datetime-local"
               name="endTime"
-              value={updateFormData.endTime || eventInfo.endStr}
+              value={updateFormData.endTime || (eventInfo ? eventInfo.endStr : '')}
               onChange={handleUpdateInputChange}
             />
           </label>
@@ -386,7 +510,7 @@ const Event: FC = () => {
             <input
               type="number"
               name="capacity"
-              value={updateFormData.capacity || eventInfo.capacity}
+              value={updateFormData.capacity || (eventInfo ? eventInfo.capacity : '')}
               onChange={handleUpdateInputChange}
             />
           </label>
@@ -395,7 +519,7 @@ const Event: FC = () => {
             <input
               type="text"
               name="price"
-              value={updateFormData.price || eventInfo.price}
+              value={updateFormData.price || (eventInfo ? eventInfo.price : '')}
               onChange={handleUpdateInputChange}
             />
           </label>
@@ -436,9 +560,11 @@ const Event: FC = () => {
           </div>
           <button type="submit">Update Event</button>
         </form>
+        </Modal>
       )}
     </div>
   );
 };
 
 export default Event;
+

@@ -144,6 +144,45 @@ const loginuser = async (Email, Password) => {
   }
 };
 
+const forgetPassword = async (Email) => {
+  try {
+    const user = await User.findOne({ where: { Email } });
+    if (!user) {
+      return { error: 'User not found', status: 404 };
+    }
+
+    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '1h' });
+    return { token, status: 200 };
+  } catch (error) {
+    console.error("Error in forgetPassword:", error);
+    return { error: 'Internal Server Error', status: 500 };
+  }
+};
+
+const resetPassword = async (token, password) => {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = await User.findByPk(decoded.id);
+
+    if (!user) {
+      return { error: 'User not found', status: 404 };
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.Password = hashedPassword;
+    await user.save();
+
+    return { message: 'Password has been reset', status: 200 };
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      res.status(400).json({ error: 'Token has expired' });
+    } else if (error.name === 'JsonWebTokenError') {
+      res.status(400).json({ error: 'Invalid token' });
+    } else {
+      res.status(500).json({ message: error.message });
+    }
+  }
+};
 
 module.exports={
     createUser,
@@ -154,5 +193,6 @@ module.exports={
     register,
     registeradmin,
     loginuser,
-
+    forgetPassword,
+  resetPassword,
 }

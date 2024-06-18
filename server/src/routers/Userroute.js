@@ -13,7 +13,8 @@ userRoutes.delete("/:id",userController.deleteUserController);
 userRoutes.post("/register",userController.registerUserController);
 userRoutes.post("/registeradmin",userController.registerAdminController);
 userRoutes.post("/login",userController.loginusercontroller)
-userRoutes.post("/forget",userController.forgetPassword);
-userRoutes.post("/reset",userController.resetPassword);
+
+userRoutes.post('/forgetpassword', userController.forgetPasswordController);
+userRoutes.post('/resetpassword/:token', userController.resetPasswordController);
 
 module.exports = userRoutes; 

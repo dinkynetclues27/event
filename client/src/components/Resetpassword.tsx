@@ -1,81 +1,63 @@
-import React,{FC,useState} from 'react';
-import {Link,useNavigate} from 'react-router-dom'
-import axios from 'axios';
-interface Resetprop{
+import React, { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 
-}
-const Reset : React.FC<Resetprop> = () =>{
-    const [Password, setPassword] = useState<string>("");
-    const navigate = useNavigate();
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        if (name === "password") setPassword(value);
-      };
-    
-      const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        try {
-        //   const { error } = schema.validate({ Email, Password }, { abortEarly: false });
-        //   if (error) throw new Error(error.details[0].message);
-            const token = window.location.pathname.split("/").pop();
-            const response = await axios.post(`http://localhost:4000/api/user/reset/${token}`, { Password });
-            
-            if (response.status === 200) {
-                navigate('/');
-              }
-         
-        } catch (error) {
-        //   setError(error.response?.data.error || err.message);
-        }
-      };
-    return(
-        <div className="container mt-4">
+const Resetpassword = () => {
+  const { token } = useParams();
+  const [Password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (Password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    try {
+      const response = await axios.post(`http://localhost:4000/api/user/resetpassword/${token}`, { Password });
+      if (response.status === 200) {
+        navigate("/");
+      }
+    } catch (error) {
+      // setError(error.response.data.message);
+    }
+  };
+
+  return (
+    <div className="container mt-4">
       <form onSubmit={handleSubmit} className="border p-4">
         <div className="row mb-3">
-          <label className="col-sm-2 col-form-label">Password: </label>
+          <label className="col-sm-2 col-form-label">New Password:</label>
           <div className="col-sm-10">
             <input
               type="password"
               className="form-control"
-              name="password"
               value={Password}
-              onChange={handleChange}
+              onChange={(e) => setPassword(e.target.value)}
             />
-            {/* {error && error.includes("email") && <div className="text-danger">{error}</div>} */}
           </div>
         </div>
-        {/* <div className="row mb-3">
-          <label className="col-sm-2 col-form-label">Password:</label>
+        <div className="row mb-3">
+          <label className="col-sm-2 col-form-label">Confirm Password:</label>
           <div className="col-sm-10">
             <input
               type="password"
               className="form-control"
-              name="password"
-            //   value={Password}
-            //   onChange={handleChange}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
             />
-            {/* {error && error.includes("password") && <div className="text-danger">{error}</div>} */}
-          {/* </div>
-        </div> */} 
+          </div>
+        </div>
+        {error && <div className="text-danger">{error}</div>}
         <button type="submit" className="btn btn-primary">
-          Reset
+          Reset Password
         </button>
-        <br />
-        <br />
-        {/* <Link to="/">
-        <button type="submit" className="btn btn-primary">
-          Login
-        </button>
-        </Link> */}
-        {/* <Link to="/register">
-          <button type="submit" className="btn btn-primary">
-            Don't have account ? Register
-          </button>
-        </Link> */}
       </form>
     </div>
-    )
-}   
+  );
+};
 
-export default Reset
-
+export default Resetpassword;
