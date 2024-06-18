@@ -4,11 +4,26 @@ require('dotenv').config();
 const { Event } = require('../models');
 const bcrypt = require('bcrypt');
 const JWT_SECRET = "event"
+const Joi = require("joi")
+
+const createEventSchema = Joi.object({
+    eventname: Joi.string().required(),
+    startTime: Joi.required(),
+    endTime: Joi.required(),
+    venue: Joi.string().required(),
+    capacity: Joi.number().required(),
+    price: Joi.string().required(),
+    repeatEvent: Joi.string().required()
+})
 
 
 const createEvent = async(data)=>{
     try{
-        const event = await Event.create(data);
+        const {error,value} = createEventSchema.validate(data)
+        if (error) {
+            throw new Error(error.details[0].message);
+          }
+        const event = await Event.create(value);
         return event;
     }
     catch(error){

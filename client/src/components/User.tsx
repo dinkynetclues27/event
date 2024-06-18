@@ -75,7 +75,7 @@ const User: FC<Userprop> = () => {
         <div className="col py-3">
           <div className="container">
             <h2>Users</h2>
-            <table className="table">
+            <table className="table" style={{color:"white"}}>
               <thead>
                 <tr>
                   <th>Name</th>
@@ -95,7 +95,7 @@ const User: FC<Userprop> = () => {
                     <td>{user.Mobile_No}</td>
                     <td>{user.Status}</td>
                     <td>{user.Request}</td>
-                    <td>  <button onClick={() => handleUpdateClick(user)}>
+                    <td>  <button style={{color:"white"}}onClick={() => handleUpdateClick(user)}>
                         Update
                       </button></td>
                     <td>

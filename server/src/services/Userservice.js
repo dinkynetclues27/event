@@ -4,7 +4,37 @@ require('dotenv').config();
 const { User } = require('../models');
 const bcrypt = require('bcrypt');
 const JWT_SECRET = "event"
+const Joi = require('joi')
 
+const createRegisterSchema = Joi.object({
+  Name: Joi.string().required(),
+  Email: Joi.string().email().required(),
+  Password: Joi.string()
+    .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{6,})'))
+    .required()
+    .messages({
+      'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, one special character, one digit, and be at least 6 characters long',
+    }),
+  Mobile_No: Joi.string()
+    .pattern(new RegExp('^[6-9]\\d{9}$'))
+    .required()
+    .messages({
+      'string.pattern.base': 'Mobile number must be exactly 10 digits long and start with a digit from 6, 7, 8, or 9',
+    }),
+  Gender: Joi.string()
+    .valid('Male', 'Female', 'Other')
+    .required(),
+});
+
+const createLoginSchema = Joi.object({
+  Email: Joi.string().email().required(),
+  Password: Joi.string()
+    .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{6,})'))
+    .required()
+    .messages({
+      'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, one special character, one digit, and be at least 6 characters long',
+    }),
+})
 const createUser = async(data)=>{
     try{
         const user = await User.create(data);
@@ -67,6 +97,19 @@ const updateUser = async (id, data) => {
 
 const register = async(Name,Email,Password,Mobile_No,Gender)=>{
     try{
+
+      const validation = createRegisterSchema.validate({
+        Name: Name,
+        Email: Email,
+        Password: Password,
+        Mobile_No: Mobile_No,
+        Gender: Gender,
+      });
+      
+      if (validation.error) {
+        throw new Error(validation.error.details[0].message);
+      }
+  
     const existingUser = await User.findOne({ where: { Email: Email } });
     if (existingUser) {
       throw new Error("User already exists");
@@ -87,6 +130,7 @@ const register = async(Name,Email,Password,Mobile_No,Gender)=>{
 
 const registeradmin = async(Name,Email,Password,Phone_No,Gender)=>{
     try{
+
     const existingUser = await User.findOne({ where: { Email: Email } });
     if (existingUser) {
       throw new Error("User already exists");
@@ -108,7 +152,17 @@ const registeradmin = async(Name,Email,Password,Phone_No,Gender)=>{
 
 
 const loginuser = async (Email, Password) => {
+
   try {
+    
+    const validation = createLoginSchema.validate({
+      Email: Email,
+      Password: Password,
+      });
+
+      if (validation.error) {
+        throw new Error(validation.error.details[0].message);
+      }
       const user = await User.findOne({ where: { Email } });
 
       if (!user) {
@@ -119,6 +173,9 @@ const loginuser = async (Email, Password) => {
           return { error: 'User request not approved', status: 403 };
       }
 
+      if (user.Status !== 'active'){
+          return { error: " User is deactive",status:403}
+      }
       const isPasswordValid = await bcrypt.compare(Password, user.Password);
 
       if (!isPasswordValid) {

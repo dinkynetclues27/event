@@ -2,12 +2,11 @@ import React from 'react';
 import { Link,useNavigate } from 'react-router-dom';
 
 const Sidebar = () => {
-//   const navigate = useNavigate();
-//   const handleLogout = () => {
-//     localStorage.removeItem("token");
-//     navigate("/login");
-// };
-
+  const navigate = useNavigate();
+const handleLogout = () => {
+  localStorage.removeItem("token");
+  navigate("/");
+};
   return (
     <div className="col-auto col-md-3 col-xl-2 px-sm-2 px-0 bg-dark">
       <div className="d-flex flex-column align-items-center align-items-sm-start px-3 pt-2 text-white min-vh-100">
@@ -50,7 +49,7 @@ const Sidebar = () => {
             {/* <li>
               <hr className="dropdown-divider" />
             </li> */}
-            <li><a className="dropdown-item" href="#" >Sign out</a></li>
+            <li><a className="dropdown-item" href="#" onClick={handleLogout}>Sign out</a></li>
           </ul>
         </div>
       </div>

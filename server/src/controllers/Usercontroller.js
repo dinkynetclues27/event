@@ -1,11 +1,16 @@
 const {User} = require('../models/User');
 const JWT_SECRET = "event"
 const nodemailer = require("nodemailer");
+const Joi = require('joi');
 
 
 const {
     createUser,getUser,getUserById,updateUser,deleteUser,register,registeradmin,loginuser,resetPassword,forgetPassword
 } = require('../services/Userservice');
+
+
+
+
 
 let transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -17,6 +22,7 @@ let transporter = nodemailer.createTransport({
 
 const createUserController = async (req,res) =>{
     try{
+
         const user = await createUser(req.body);
         res.status(200).json(user);
     }
@@ -53,6 +59,11 @@ const updateUserController = async(req,res)=>{
     } else if (user.Request === 'pending' && req.body.Request === 'reject') {
       sendRejectionEmail(user.Email);
     }
+
+    if(user.Status==="active" && req.body.Status === 'deactive'){
+      sendDeactiveEmail(user.Email)
+    }
+
     res.status(200).json(updatedUser);
     } catch (error) {
       res.status(404).json({ error: error.message });
@@ -115,6 +126,23 @@ const sendApprovalEmail = (userEmail) => {
   });
 };
 
+const sendDeactiveEmail = (userEmail) => {
+  const mailOptions = {
+    from: 'dinkyjani27@gmail.com',
+    to: userEmail,
+    subject: 'Account Deactive',
+    text: 'Your account has been Deactive. Contact for more info.'
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error('Error sending email:', error);
+    } else {
+      console.log('Email sent:', info.response);
+    }
+  });
+};
+
 
 const sendRejectionEmail = (userEmail) => {
   const mailOptions = {
@@ -144,6 +172,7 @@ const registerAdminController = async(req,res)=>{
 }
 
 const loginusercontroller = async (req, res) => {
+  
   const { Email, Password } = req.body;
 
   const result = await loginuser(Email, Password);

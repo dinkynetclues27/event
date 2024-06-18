@@ -81,6 +81,8 @@ const Event: FC = () => {
   const [form, setForm] = useState(false);
   const [updateForm, setUpdateForm] = useState(false);
   const [updateFormData, setUpdateFormData] = useState<any>({});
+  const [error, setError] = useState<string | null>(null); 
+  const [success, setSuccess] = useState<string | null>(null);
 
   const fetchEvents = async () => {
     try {
@@ -187,8 +189,8 @@ const Event: FC = () => {
 
           events.push({
             eventname: formData.eventname,
-            startTime: eventStartTime.toISOString(),
-            endTime: eventEndTime.toISOString(),
+            startTime: eventStartTime.toString(),
+            endTime: eventEndTime.toString(),
             venue: formData.venue,
             capacity: formData.capacity,
             price: formData.price,
@@ -204,8 +206,8 @@ const Event: FC = () => {
     
           events.push({
             eventname: formData.eventname,
-            startTime: eventStartTime.toISOString(),
-            endTime: eventEndTime.toISOString(),
+            startTime: eventStartTime.toString(),
+            endTime: eventEndTime.toString(),
             venue: formData.venue,
             capacity: formData.capacity,
             price: formData.price,
@@ -221,8 +223,8 @@ const Event: FC = () => {
 
           events.push({
             eventname: formData.eventname,
-            startTime: eventStartTime.toISOString(),
-            endTime: eventEndTime.toISOString(),
+            startTime: eventStartTime.toString(),
+            endTime: eventEndTime.toString(),
             venue: formData.venue,
             capacity: formData.capacity,
             price: formData.price,
@@ -255,10 +257,25 @@ const Event: FC = () => {
           price: 0,
           repeatEvent: "none",
         });
+        setSuccess("Event successful");
+         setError(null);
         setForm(false);
       })
       .catch((error) => {
-        console.error("Error creating events:", error);
+        if (error.response) {
+        
+          console.error('Error response:', error.response.data);
+          setError(error.response.data.error || "Server Error");
+        } else if (error.request) {
+          
+          console.error('No response received:', error.request);
+          setError("No response from server");
+        } else {
+         
+          console.error('Error setting up request:', error.message);
+          setError(error.message);
+        }
+        setSuccess(null);
       });
   };
 
@@ -435,6 +452,8 @@ const Event: FC = () => {
           <label className="form-check-label" htmlFor="yearly">Yearly</label>
         </div>
       </div>
+      {error && <div className="alert alert-danger">{error}</div>}
+      {success && <div className="alert alert-success">{success}</div>}
       <button type="submit" className="btn btn-primary">Create Event</button>
     </form>
   </div>

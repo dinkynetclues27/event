@@ -9,7 +9,9 @@ interface LoginProps {}
 const Login: React.FC<LoginProps> = () => {
   const [Email, setEmail] = useState<string>("");
   const [Password, setPassword] = useState<string>("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null); 
+  const [success, setSuccess] = useState<string | null>(null);
+
   const navigate = useNavigate();
 
   const schema = Joi.object({
@@ -20,9 +22,10 @@ const Login: React.FC<LoginProps> = () => {
         "string.email": "Email must be a valid email address",
         "any.required": "Email is required",
       }),
-    Password: Joi.string().min(5).required().messages({
-      "string.min": "Password must be at least 5 characters long",
-      "any.required": "Password is required",
+    Password: Joi.string().pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{6,})'))
+    .required()
+    .messages({
+      'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, one special character, one digit, and be at least 6 characters long',
     }),
   });
 
@@ -42,6 +45,7 @@ const Login: React.FC<LoginProps> = () => {
       if (response.status === 200) {
         const { token } = response.data;
         localStorage.setItem("token", token);
+        setSuccess("Login Successfully")
         console.log("Login successfully");
         if (Email === "admin@gmail.com") {
           navigate("/home");
@@ -49,12 +53,26 @@ const Login: React.FC<LoginProps> = () => {
           navigate("/userhome");
         }
       }
-    } catch (error) {
-    //   setError(error.response?.data.error || err.message);
+    } catch (error:any) {
+      if (error.response) {
+        
+        console.error('Error response:', error.response.data);
+        setError(error.response.data.error || "Server Error");
+      } else if (error.request) {
+        
+        console.error('No response received:', error.request);
+        setError("No response from server");
+      } else {
+       
+        console.error('Error setting up request:', error.message);
+        setError(error.message);
+      }
+      setSuccess(null);
     }
   };
 
   return (
+    <div>
     <div className="container mt-4">
       <form onSubmit={handleSubmit} className="border p-4">
         <div className="row mb-3">
@@ -83,6 +101,9 @@ const Login: React.FC<LoginProps> = () => {
             {error && error.includes("password") && <div className="text-danger">{error}</div>}
           </div>
         </div>
+        {error && <div className="alert alert-danger">{error}</div>}
+        {success && <div className="alert alert-success">{success}</div>}
+
         <button type="submit" className="btn btn-primary">
           Login
         </button>
@@ -99,6 +120,7 @@ const Login: React.FC<LoginProps> = () => {
           </button>
         </Link>
       </form>
+    </div>
     </div>
   );
 };

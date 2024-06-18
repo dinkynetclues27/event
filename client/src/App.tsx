@@ -11,11 +11,13 @@ import Event from './components/Event';
 import UserHome from './components/UserHome';
 import ForgetPassword from './components/ForgetPassword';
 import Resetpassword from './components/Resetpassword';
+import Error from './components/Error'
 
 function App() {
   return (
     <div className="App">
       <Router>
+        
         <Routes>
           <Route path="/" element={<Login/>}/>
           <Route path='/home' element={<Home/>}/>
@@ -25,11 +27,10 @@ function App() {
           <Route path='/register' element={<Registration/>}/>
           <Route path="/forget" element={<ForgetPassword />} />
           <Route path="/resetpassword/:token" element={<Resetpassword />} />
+          <Route path="/*" element={<Error/>}/>
         </Routes>
       </Router>
 
-      {/* <Register /> */}
-      {/* <User/> */}
     </div>
   );
 }
