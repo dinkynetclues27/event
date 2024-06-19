@@ -12,10 +12,13 @@ import UserHome from './components/UserHome';
 import ForgetPassword from './components/ForgetPassword';
 import Resetpassword from './components/Resetpassword';
 import Error from './components/Error'
+import { AuthProvider } from './components/AuthContext';
+import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   return (
     <div className="App">
+      <AuthProvider>
       <Router>
         
         <Routes>
@@ -30,7 +33,7 @@ function App() {
           <Route path="/*" element={<Error/>}/>
         </Routes>
       </Router>
-
+      </AuthProvider>
     </div>
   );
 }
