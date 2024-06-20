@@ -53,7 +53,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
 import interactionPlugin from "@fullcalendar/interaction";
 import Sidebar from "./Sidebar";
-import Modal from "./Modal"; // Import the Modal component
+import Modal from "./Modal"; 
 
 interface FormData {
   eventname: string;
@@ -92,6 +92,7 @@ const Event: FC = () => {
         title: event.eventname,
         start: event.startTime,
         end: event.endTime,
+        // backgroundColor:"green",
         extendedProps: {
           location: event.venue,
           capacity: event.capacity,
@@ -309,9 +310,9 @@ const Event: FC = () => {
       <div className="row flex-nowrap">
         <Sidebar />
         <div className="col py-3">
-          <div className="container">
-            <div className="App">
-              <FullCalendar
+          <div className="container" style={{backgroundColor:"white"}}>
+            <div className="App"> 
+              <FullCalendar 
                 plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
                 initialView="dayGridMonth"
                 events={[...events]}
@@ -327,6 +328,9 @@ const Event: FC = () => {
                 editable={true}
                 eventClick={handleEventClick}
                 dateClick={handleDateClick}
+                eventColor="purple" 
+                eventBackgroundColor="pink"
+                eventTextColor="purple"
               />
             </div>
           </div>

@@ -1,11 +1,10 @@
-// AuthContext.tsx
 import React, { createContext, useContext, useState } from 'react';
 
-type UserRole = 'user' | 'admin';
+type User_type = 'user' | 'admin';
 
 interface AuthContextType {
   isLoggedIn: boolean;
-  userRole: UserRole;
+  userRole: User_type;
   login: () => void;
   logout: () => void;
 }
@@ -22,18 +21,18 @@ export const useAuth = (): AuthContextType => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState<UserRole>('user'); // Default role
+  const [userRole, setUserRole] = useState<User_type>('user'); 
 
   const login = () => {
-    // Implement login logic here, set isLoggedIn and userRole based on API response
+  
     setIsLoggedIn(true);
-    setUserRole('user'); // or 'admin'
+    setUserRole('user'); 
   };
 
   const logout = () => {
-    // Implement logout logic here
+ 
     setIsLoggedIn(false);
-    setUserRole('user'); // Reset role on logout
+    setUserRole('user');
   };
 
   const authContextValue: AuthContextType = {

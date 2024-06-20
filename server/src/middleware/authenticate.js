@@ -28,6 +28,7 @@ const authenticateUser = async (req, res, next) => {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
             
+            
             req.user = decoded;
             next();
         });
@@ -37,4 +38,12 @@ const authenticateUser = async (req, res, next) => {
     }
 };
 
-module.exports = authenticateUser;
+const isAdmin = (req, res, next) => {
+    if (req.user && req.user.User_type === 'admin') {
+        next();
+    } else {
+        return res.status(403).send({ error: 'Admin access required' });
+    }
+};
+
+module.exports = {authenticateUser,isAdmin};

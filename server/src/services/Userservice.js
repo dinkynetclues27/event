@@ -251,5 +251,5 @@ module.exports={
     registeradmin,
     loginuser,
     forgetPassword,
-  resetPassword,
+    resetPassword,
 }
