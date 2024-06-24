@@ -75,7 +75,7 @@ const User: FC<Userprop> = () => {
         <div className="col py-3">
           <div className="container">
             <h2>Users</h2>
-            <table className="table" style={{color:"white"}} >
+            <table className="table">
               <thead>
                 <tr>
                   <th>Name</th>

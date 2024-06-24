@@ -1,7 +1,7 @@
-const {User} = require('../models/User');
-const JWT_SECRET = "event"
+// const {User} = require('../models/User');
+// const JWT_SECRET = "event"
 const nodemailer = require("nodemailer");
-const Joi = require('joi');
+// const Joi = require('joi');
 
 
 const {

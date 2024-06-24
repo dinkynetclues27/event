@@ -9,7 +9,7 @@ const {User} = require("../models")
 userRoutes.post('/',userController.createUserController);
 userRoutes.get('/',authenticateUser,userController.getUserController);
 userRoutes.get("/:id",authenticateUser,userController.getUserByIdController);
-userRoutes.patch("/:id",authenticateUser,userController.updateUserController);
+userRoutes.patch("/:id",userController.updateUserController);
 // userRoutes.patch("/")
 userRoutes.delete("/:id",authenticateUser,userController.deleteUserController);
 userRoutes.post("/register",userController.registerUserController);
